@@ -42,7 +42,7 @@ class ChatGPTPlugin:
     chatbot.refresh_session()
     return chatbot
 
-  @neovim.command('Chat', nargs='1')
+  @neovim.command('ChatGPT', nargs='1')
   def chat(self, args):
     try:
       self.nvim.api.echo([[self.bot.get_chat_response(args[0])['message'], '']], True, {})
