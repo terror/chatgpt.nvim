@@ -19,7 +19,7 @@ You can install this plugin with packer or any other vim plugin manager:
 ```lua
 use({
   'terror/chatgpt.nvim',
-  run = 'pip3 install revChatGPT --upgrade'
+  run = 'pip3 install -r requirements.txt'
 })
 ```
 
