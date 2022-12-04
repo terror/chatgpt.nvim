@@ -27,9 +27,16 @@ use({
 
 The plugin looks for a configuration file in your home directory called
 `.chatgpt-nvim.json`, and it expects a valid `session_token` to be set for
-queries to work.
+queries to work:
 
-You can find this session token by completing the following steps:
+```
+{
+  "authorization": "<API-KEY>",      # Optional API key
+  "session_token": "<SESSION-TOKEN>" # Your ChatGPT session token
+}
+```
+
+You can find your session token by completing the following steps:
 1. Navigate to [https://chat.openai.com/chat](https://chat.openai.com/chat)
    after logging in or signing up
 2. Open the developer console (F12)
