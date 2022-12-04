@@ -5,7 +5,7 @@ neovim.
 
 ### Demo
 
-[![asciicast](https://asciinema.org/a/9YqFDchOVaQS5QRbGOzWiYNPb.svg)](https://asciinema.org/a/9YqFDchOVaQS5QRbGOzWiYNPb)
+[![asciicast](https://asciinema.org/a/kDqlcFdEH0W3aifrXn06mpoMh.svg)](https://asciinema.org/a/kDqlcFdEH0W3aifrXn06mpoMh)
 
 ### Requirements
 
