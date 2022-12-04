@@ -42,6 +42,9 @@ class ChatGPTPlugin:
     chatbot.refresh_session()
     return chatbot
 
-  @neovim.command("Chat", nargs='1')
+  @neovim.command('Chat', nargs='1')
   def chat(self, args):
-    self.nvim.command(f'echo "{self.bot.get_chat_response(args[0])["message"]}"')
+    try:
+      self.nvim.api.echo([[self.bot.get_chat_response(args[0])['message'], '']], True, {})
+    except Exception as error:
+      self.nvim.api.echo([[f'error: {error}', '']], True, {})
