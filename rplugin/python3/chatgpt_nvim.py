@@ -30,21 +30,23 @@ class Config:
       'Authorization': self.authorization, 'session_token': self.session_token
     }
 
+class Neovim:
+  def __init__(self, client):
+    self.client = client
+
+  def write(self, message):
+    self.client.api.echo([[message, '']], True, {})
+
 @neovim.plugin
 class ChatGPTPlugin:
   def __init__(self, nvim):
-    self.nvim = nvim
-    self.bot = self.__bot()
-
-  def __bot(self):
-    chatbot = Chatbot(Config.load().as_dict(), conversation_id=None)
-    chatbot.reset_chat()
-    chatbot.refresh_session()
-    return chatbot
+    self.nvim = Neovim(nvim)
+    self.bot = Chatbot(Config.load().as_dict())
 
   @neovim.command('ChatGPT', nargs='1')
   def chat(self, args):
     try:
-      self.nvim.api.echo([[self.bot.get_chat_response(args[0])['message'], '']], True, {})
+      self.bot.refresh_session()
+      self.nvim.write(self.bot.get_chat_response(args[0])['message'])
     except Exception as error:
-      self.nvim.api.echo([[f'error: {error}', '']], True, {})
+      self.nvim.write(f'error: Failed to get response from ChatGPT')

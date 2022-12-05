@@ -1,7 +1,7 @@
 ## chatgpt.vim 🤖
 
-**chatgpt.nvim** is a neovim plugin that lets you query chatgpt directly in
-neovim.
+**chatgpt.nvim** is a Neovim plugin that lets you query ChatGPT inside a Neovim
+buffer.
 
 ### Demo
 
