@@ -87,7 +87,7 @@ class ChatGPTPlugin:
     self.bot = Bot(Chatbot(Config.load().as_dict()))
     self.nvim = Neovim(nvim)
 
-  @neovim.command('ChatGPT', nargs='+')
+  @neovim.command('ChatGPT', nargs='*')
   def chat(self, args):
     self.bot.refresh()
 
