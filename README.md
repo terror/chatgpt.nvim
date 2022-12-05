@@ -7,12 +7,10 @@ neovim.
 
 [![asciicast](https://asciinema.org/a/kDqlcFdEH0W3aifrXn06mpoMh.svg)](https://asciinema.org/a/kDqlcFdEH0W3aifrXn06mpoMh)
 
-### Requirements
-
-You must have **python3** and **pip3** installed on your machine in order to
-install and use this plugin.
-
 ### Installation
+
+*n.b. You must have [python3](https://www.python.org/downloads/) installed on your machine in order to
+install and use this plugin.*
 
 You can install this plugin with packer or any other vim plugin manager:
 
@@ -41,8 +39,8 @@ You can find your session token by completing the following steps:
    after logging in or signing up
 2. Open the developer console (F12)
 3. Application > Cookies
-4. Copy `__Secure-next-auth.session-token` into the `session_token` field
-   present in the `.chatgpt-nvim.json` configuration file
+4. Copy the value under `__Secure-next-auth.session-token` into the `session_token`
+   field present in the `.chatgpt-nvim.json` configuration file
 
 ### Credits
 
