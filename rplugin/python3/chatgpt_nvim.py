@@ -248,8 +248,6 @@ class Chat:
       f'autocmd InsertLeave <buffer={buffer.number}> call _chat_query()'
     )
 
-    self.client.command(f'autocmd BufLeave,BufWinLeave call _chat_closed()')
-
     return buffer
 
   def __display_buffer(self):
@@ -257,8 +255,6 @@ class Chat:
 
     buffer.options['bufhidden'] = 'wipe'
     buffer.options['swapfile'] = False
-
-    self.client.command(f'autocmd BufLeave,BufWinLeave call _chat_closed()')
 
     return buffer
 
