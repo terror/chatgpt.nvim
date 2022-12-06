@@ -187,7 +187,7 @@ class Chat:
 
     self.display_window = self.window_manager.open(
       display_buffer,
-      border='rounded',
+      border='shadow',
       enter=False,
       height=80,
       relative='editor',
@@ -197,7 +197,7 @@ class Chat:
     self.prompt_window = self.window_manager.open(
       prompt_buffer,
       align=Align.S,
-      border='rounded',
+      border='shadow',
       enter=True,
       height=1,
       relative='editor'

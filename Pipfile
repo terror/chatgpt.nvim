@@ -1,7 +1,7 @@
 [[source]]
+name = "pypi"
 url = "https://pypi.org/simple"
 verify_ssl = true
-name = "pypi"
 
 [packages]
 neovim = "*"
@@ -9,8 +9,8 @@ python-dotenv = "*"
 revchatgpt = "*"
 
 [dev-packages]
-yapf = "*"
 isort = "*"
+yapf = "*"
 
 [requires]
 python_version = "3.9"
