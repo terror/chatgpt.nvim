@@ -11,6 +11,20 @@ from revChatGPT.revChatGPT import Chatbot
 CONFIG_PATH = '~/.chatgpt-nvim.json'
 DEFAULT_CONFIG = {'authorization': '', 'session_token': ''}
 
+CHAT_GPT = r'''
+      ___           ___           ___           ___           ___           ___           ___
+     /\  \         /\__\         /\  \         /\  \         /\  \         /\  \         /\  \
+    /::\  \       /:/  /        /::\  \        \:\  \       /::\  \       /::\  \        \:\  \
+   /:/\:\  \     /:/__/        /:/\:\  \        \:\  \     /:/\:\  \     /:/\:\  \        \:\  \
+  /:/  \:\  \   /::\  \ ___   /::\~\:\  \       /::\  \   /:/  \:\  \   /::\~\:\  \       /::\  \
+ /:/__/ \:\__\ /:/\:\  /\__\ /:/\:\ \:\__\     /:/\:\__\ /:/__/_\:\__\ /:/\:\ \:\__\     /:/\:\__\
+ \:\  \  \/__/ \/__\:\/:/  / \/__\:\/:/  /    /:/  \/__/ \:\  /\ \/__/ \/__\:\/:/  /    /:/  \/__/
+  \:\  \            \::/  /       \::/  /    /:/  /       \:\ \:\__\        \::/  /    /:/  /
+   \:\  \           /:/  /        /:/  /     \/__/         \:\/:/  /         \/__/     \/__/
+    \:\__\         /:/  /        /:/  /                     \::/  /
+     \/__/         \/__/         \/__/                       \/__/
+'''
+
 @dataclass
 class Config:
   authorization: str
@@ -48,7 +62,9 @@ class Align(Enum):
   W = "W"
   CENTER = "CENTER"
 
-class Window:
+# Alot of the window math stuff was adapted
+# from here: https://github.com/stevearc/gkeep.nvim
+class WindowManager:
   def __init__(self, client):
     self.client = client
 
@@ -67,7 +83,7 @@ class Window:
     width=0.9,
     win=None,
   ):
-    width, height, total_width, total_height = self.dimensions(
+    width, height, total_width, total_height = self.__dimensions(
         width, height, relative, win
     )
 
@@ -130,12 +146,15 @@ class Window:
 
     return (anchor, row, col)
 
-  def dimensions(self, width, height, relative, win):
+  def __dimensions(self, width, height, relative, win):
     total_width, total_height = self.__parent_dimensions(relative, win)
+
     if isinstance(width, float):
       width = int(round(width * (total_width - 2)))
+
     if isinstance(height, float):
       height = int(round(height * (total_height - 2)))
+
     return width, height, total_width, total_height
 
   def __parent_dimensions(self, relative, win):
@@ -146,15 +165,80 @@ class Window:
     else:
       if win is None: win = self.client.current.window
       total_width, total_height = win.width, win.height
+
     return (total_width, total_height)
 
 class Chat:
   def __init__(self, client):
     self.client = client
-    self.window = Window(client)
+    self.window_manager = WindowManager(client)
     self.display_buffer = None
     self.display_window = None
     self.prompt_window = None
+
+  def write(self, text):
+    if self.display_buffer:
+      self.display_buffer.append(text)
+
+  def show(self):
+    prompt_buffer, display_buffer = self.__prompt_buffer(), self.__display_buffer()
+
+    self.display_buffer = display_buffer
+
+    self.display_window = self.window_manager.open(
+      display_buffer,
+      border='rounded',
+      enter=False,
+      height=80,
+      relative='editor',
+      scrollable=True,
+    )
+
+    self.prompt_window = self.window_manager.open(
+      prompt_buffer,
+      align=Align.S,
+      border='rounded',
+      enter=True,
+      height=1,
+      relative='editor'
+    )
+
+    self.display_buffer.append(CHAT_GPT.split('\n'))
+
+    self.client.funcs.prompt_setcallback(prompt_buffer, "_chat_closed")
+    self.client.funcs.prompt_setinterrupt(prompt_buffer, "_chat_closed")
+    self.client.funcs.prompt_setprompt(prompt_buffer, '> ')
+
+    self.client.command('startinsert!')
+
+  def query(self, bot):
+    if not self.prompt_window or not self.prompt_window.valid:
+      return
+
+    text = self.prompt_window.buffer[0]
+
+    self.write([f'{text}', ''])
+
+    try:
+      self.write(
+        list(
+          map(
+            lambda x: str(x),
+            bot.query(self.prompt_window.buffer[0]).split('\n')
+          )
+        ) + ['']
+      )
+    except:
+      self.write([f'error: Failed to get response from ChatGPT', ''])
+
+  def close(self):
+    if self.prompt_window and self.prompt_window.valid:
+      self.prompt_window.api.close(True)
+
+    if self.display_window and self.display_window.valid:
+      self.display_window.api.close(True)
+
+    self.prompt_window = self.display = None
 
   def __prompt_buffer(self):
     buffer = self.client.api.create_buf(False, True)
@@ -168,7 +252,7 @@ class Chat:
     )
 
     self.client.command(
-      f'autocmd BufWinLeave,ExitPre <buffer={buffer.number}> call _chat_closed()'
+      f'autocmd BufLeave,BufWinLeave <buffer={buffer.number}> call _chat_closed()'
     )
 
     return buffer
@@ -179,54 +263,11 @@ class Chat:
     buffer.options['bufhidden'] = 'wipe'
     buffer.options['swapfile'] = False
 
+    self.client.command(
+      f'autocmd BufLeave,BufWinLeave <buffer={buffer.number}> call _chat_closed()'
+    )
+
     return buffer
-
-  def display_text(self, text):
-    if self.display_buffer:
-      self.display_buffer.append(text)
-
-  def close(self, text):
-    if self.prompt_window and self.prompt_window.valid:
-      self.prompt_window.api.close(True)
-
-    if self.display_window and self.display_window.valid:
-      self.display_window.api.close(True)
-
-    self.prompt_window = self.display = None
-
-  def show(self):
-    prompt_buffer, display_buffer = self.__prompt_buffer(), self.__display_buffer()
-
-    self.display_buffer = display_buffer
-
-    self.display_window = self.window.open(
-      display_buffer,
-      height=80,
-      scrollable=True,
-    )
-
-    self.prompt_window = self.window.open(
-      prompt_buffer, height=1, align=Align.S
-    )
-
-    self.client.funcs.prompt_setprompt(prompt_buffer, '> ')
-
-    self.client.command('startinsert!')
-
-  def query(self, bot):
-    if not self.prompt_window or not self.prompt_window.valid:
-      return
-
-    text = self.prompt_window.buffer[0]
-
-    self.display_text([f'{text}', ''])
-
-    try:
-      self.display_text([
-        bot.query(self.prompt_window.buffer[0]).split('\n'), ''
-      ])
-    except:
-      self.display_text([f'error: Failed to get response from ChatGPT', ''])
 
 class Editor:
   def __init__(self, client):
@@ -261,9 +302,12 @@ class Plugin:
 
   @neovim.function('_chat_closed')
   def _chat_closed(self, args):
-    self.editor.chat.close('foo')
+    self.editor.chat.close()
 
-  @neovim.command('ChatGPT', nargs='*', sync=True)
+  @neovim.command(
+    'ChatGPT',
+    nargs='*',
+  )
   def chat(self, args):
     self.bot.refresh()
 
@@ -272,5 +316,5 @@ class Plugin:
     else:
       try:
         self.editor.write(self.bot.query(' '.join(args)))
-      except Exception as error:
+      except:
         self.editor.write('error: Failed to get response from ChatGPT')
