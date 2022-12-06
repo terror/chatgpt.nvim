@@ -171,19 +171,16 @@ class WindowManager:
 class Chat:
   def __init__(self, client):
     self.client = client
-    self.window_manager = WindowManager(client)
-    self.display_buffer = None
     self.display_window = None
     self.prompt_window = None
+    self.window_manager = WindowManager(client)
 
   def write(self, text):
-    if self.display_buffer:
-      self.display_buffer.append(text)
+    if self.display_window:
+      self.display_window.buffer.append(text)
 
   def show(self):
     prompt_buffer, display_buffer = self.__prompt_buffer(), self.__display_buffer()
-
-    self.display_buffer = display_buffer
 
     self.display_window = self.window_manager.open(
       display_buffer,
@@ -203,7 +200,7 @@ class Chat:
       relative='editor'
     )
 
-    self.display_buffer.append(CHAT_GPT.split('\n'))
+    self.display_window.buffer.append(CHAT_GPT.split('\n'))
 
     self.client.funcs.prompt_setcallback(prompt_buffer, "_chat_closed")
     self.client.funcs.prompt_setinterrupt(prompt_buffer, "_chat_closed")
@@ -251,9 +248,7 @@ class Chat:
       f'autocmd InsertLeave <buffer={buffer.number}> call _chat_query()'
     )
 
-    self.client.command(
-      f'autocmd BufLeave,BufWinLeave <buffer={buffer.number}> call _chat_closed()'
-    )
+    self.client.command(f'autocmd BufLeave,BufWinLeave call _chat_closed()')
 
     return buffer
 
@@ -263,9 +258,7 @@ class Chat:
     buffer.options['bufhidden'] = 'wipe'
     buffer.options['swapfile'] = False
 
-    self.client.command(
-      f'autocmd BufLeave,BufWinLeave <buffer={buffer.number}> call _chat_closed()'
-    )
+    self.client.command(f'autocmd BufLeave,BufWinLeave call _chat_closed()')
 
     return buffer
 
