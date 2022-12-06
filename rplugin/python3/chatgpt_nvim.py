@@ -48,103 +48,113 @@ class Align(Enum):
   W = "W"
   CENTER = "CENTER"
 
-def get_parent_dim(vim, relative, win):
-  if relative == "editor":
-    total_width, total_height = vim.options["columns"], vim.options["lines"] - vim.options["cmdheight"]
-  else:
-    if win is None: win = vim.current.window
-    total_width, total_height = win.width, win.height
-  return (total_width, total_height)
+class Window:
+  def __init__(self, client):
+    self.client = client
 
-def calc_dim(vim, width, height, relative, win):
-  total_width, total_height = get_parent_dim(vim, relative, win)
-  if isinstance(width, float):
-    width = int(round(width * (total_width - 2)))
-  if isinstance(height, float):
-    height = int(round(height * (total_height - 2)))
-  return width, height, total_width, total_height
-
-def open_win(
-  vim,
-  buffer,
-  align=Align.CENTER,
-  anchor=Anchor.NW,
-  border="shadow",
-  col: int = 0,
-  enter=True,
-  height=0.9,
-  relative="editor",
-  row: int = 0,
-  scrollable=False,
-  width=0.9,
-  win=None,
-):
-  width, height, total_width, total_height = calc_dim(
-      vim, width, height, relative, win
-  )
-
-  if align is not None:
-    if relative == "cursor":
-      raise Exception("Align requires relative = win/editor")
-    anchor, row, col = calc_alignment(
-        align, width, height, total_width, total_height
+  def open(
+    self,
+    buffer,
+    align=Align.CENTER,
+    anchor=Anchor.NW,
+    border="rounded",
+    col: int = 0,
+    enter=True,
+    height=0.9,
+    relative="editor",
+    row: int = 0,
+    scrollable=False,
+    width=0.9,
+    win=None,
+  ):
+    width, height, total_width, total_height = self.dimensions(
+        width, height, relative, win
     )
 
-  window = vim.api.open_win(
-    buffer,
-    enter,
-    {
-      "anchor": anchor.value,
-      "border": border,
-      "col": col,
-      "height": height,
-      "relative": relative,
-      "row": row,
-      "style": "minimal",
-      "width": width,
-    },
-  )
+    if align is not None:
+      if relative == "cursor":
+        raise Exception("Align requires relative = win/editor")
+      anchor, row, col = self.__alignment(
+          align, width, height, total_width, total_height
+      )
 
-  if not scrollable:
-    window.options['scrolloff'] = window.options['sidescrolloff'] = 0
+    window = self.client.api.open_win(
+      buffer,
+      enter,
+      {
+        "anchor": anchor.value,
+        "border": border,
+        "col": col,
+        "height": height,
+        "relative": relative,
+        "row": row,
+        "style": "minimal",
+        "width": width,
+      },
+    )
 
-  return window
+    if not scrollable:
+      window.options['scrolloff'] = window.options['sidescrolloff'] = 0
 
-def calc_alignment(
-  align: Align, width: int, height: int, total_width: int, total_height: int
-):
-  anchor, row, col = Anchor.NW, 0, 0
+    return window
 
-  if align == Align.CENTER:
-    row, col = (total_height - height) // 2, (total_width - width) // 2
-  elif align == Align.N:
-    row, col = 0, (total_width - width) // 2
-  elif align == Align.NE:
-    anchor, row, col = Anchor.NE, 0, total_width
-  elif align == Align.E:
-    anchor = Anchor.NE
-    row, col = (total_height - height) // 2, total_width
-  elif align == Align.SE:
-    anchor = Anchor.SE
-    row, col = total_height, total_width
-  elif align == Align.S:
-    anchor = Anchor.SW
-    row, col = total_height, (total_width - width) // 2
-  elif align == Align.SW:
-    anchor = Anchor.SW
-    row, col = total_height, 0
-  elif align == Align.W:
-    row, col = (total_height - height) // 2, 0
+  def __alignment(
+    self,
+    align: Align,
+    width: int,
+    height: int,
+    total_width: int,
+    total_height: int
+  ):
+    anchor, row, col = Anchor.NW, 0, 0
 
-  return (anchor, row, col)
+    if align == Align.CENTER:
+      row, col = (total_height - height) // 2, (total_width - width) // 2
+    elif align == Align.N:
+      row, col = 0, (total_width - width) // 2
+    elif align == Align.NE:
+      anchor, row, col = Anchor.NE, 0, total_width
+    elif align == Align.E:
+      anchor, row, col = Anchor.NE, (total_height - height) // 2, total_width
+    elif align == Align.SE:
+      anchor = Anchor.SE
+      row, col = total_height, total_width
+    elif align == Align.S:
+      anchor = Anchor.SW
+      row, col = total_height, (total_width - width) // 2
+    elif align == Align.SW:
+      anchor = Anchor.SW
+      row, col = total_height, 0
+    elif align == Align.W:
+      row, col = (total_height - height) // 2, 0
+
+    return (anchor, row, col)
+
+  def dimensions(self, width, height, relative, win):
+    total_width, total_height = self.__parent_dimensions(relative, win)
+    if isinstance(width, float):
+      width = int(round(width * (total_width - 2)))
+    if isinstance(height, float):
+      height = int(round(height * (total_height - 2)))
+    return width, height, total_width, total_height
+
+  def __parent_dimensions(self, relative, win):
+    if relative == "editor":
+      total_width = self.client.options["columns"]
+      total_height = self.client.options["lines"] - self.client.options[
+        "cmdheight"]
+    else:
+      if win is None: win = self.client.current.window
+      total_width, total_height = win.width, win.height
+    return (total_width, total_height)
 
 class Chat:
   def __init__(self, client):
     self.client = client
+    self.window = Window(client)
     self.display_buffer = None
     self.display_window = None
     self.prompt_window = None
-    self.count = 1
 
   def __prompt_buffer(self):
     buffer = self.client.api.create_buf(False, True)
@@ -158,7 +168,7 @@ class Chat:
     )
 
     self.client.command(
-      f'autocmd BufWinLeave <buffer={buffer.number}> call _chat_closed()'
+      f'autocmd BufWinLeave,ExitPre <buffer={buffer.number}> call _chat_closed()'
     )
 
     return buffer
@@ -182,32 +192,41 @@ class Chat:
     if self.display_window and self.display_window.valid:
       self.display_window.api.close(True)
 
-    self.window = self.display = None
-
-    self.count = 0
-
-  def query(self, bot):
-    if not self.prompt_window or not self.prompt_window.valid: return
-    self.display_text(['', f'[{self.count}] Querying...', ''])
-    self.count += 1
-    self.display_text(bot.query(self.prompt_window.buffer[0]).split('\n'))
+    self.prompt_window = self.display = None
 
   def show(self):
     prompt_buffer, display_buffer = self.__prompt_buffer(), self.__display_buffer()
 
     self.display_buffer = display_buffer
 
-    self.display_window = open_win(
-      self.client, display_buffer, height=75, scrollable=True
+    self.display_window = self.window.open(
+      display_buffer,
+      height=80,
+      scrollable=True,
     )
 
-    self.prompt_window = open_win(
-      self.client, prompt_buffer, height=1, align=Align.S
+    self.prompt_window = self.window.open(
+      prompt_buffer, height=1, align=Align.S
     )
 
     self.client.funcs.prompt_setprompt(prompt_buffer, '> ')
 
     self.client.command('startinsert!')
+
+  def query(self, bot):
+    if not self.prompt_window or not self.prompt_window.valid:
+      return
+
+    text = self.prompt_window.buffer[0]
+
+    self.display_text([f'{text}', ''])
+
+    try:
+      self.display_text([
+        bot.query(self.prompt_window.buffer[0]).split('\n'), ''
+      ])
+    except:
+      self.display_text([f'error: Failed to get response from ChatGPT', ''])
 
 class Editor:
   def __init__(self, client):
@@ -254,4 +273,4 @@ class Plugin:
       try:
         self.editor.write(self.bot.query(' '.join(args)))
       except Exception as error:
-        self.editor.write(f'error: Failed to get response from ChatGPT')
+        self.editor.write('error: Failed to get response from ChatGPT')
