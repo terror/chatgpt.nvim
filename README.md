@@ -12,7 +12,8 @@ buffer.
 *n.b. You must have [python3](https://www.python.org/downloads/) installed on your machine in order to
 install and use this plugin.*
 
-You can install this plugin with packer or any other vim plugin manager:
+You can install this plugin with [packer](https://github.com/wbthomason/packer.nvim)
+or any other vim plugin manager:
 
 ```lua
 use({
