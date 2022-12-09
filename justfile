@@ -1,6 +1,8 @@
 default:
   just --list
 
+all: forbid fmt-check
+
 forbid:
   ./bin/forbid
 
@@ -15,9 +17,6 @@ install *pkg:
 
 install-editable:
   pipenv install -e .
-
-lint:
-  pylint placeholder
 
 lock:
   pipenv lock --pre
