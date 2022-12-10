@@ -51,7 +51,7 @@ Below are the available commands this plugin supports:
 | Name    | Arguments | Description                                                        |
 | ------- | --------- | ------------------------------------------------------------------ |
 | ChatGPT |           | Open a new interactive ChatGPT environment                         |
-| ChatGPT | \[query\] | Load a ChatGPT response to `query` into the neovim command prompt. |
+| ChatGPT | \[query\] | Load a ChatGPT response to `query` into the Neovim command prompt. |
 
 ### Credits
 
