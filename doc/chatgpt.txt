@@ -14,6 +14,6 @@ COMMANDS                                                       *chatgpt-commands
 
                                                                     *:ChatGPT*
 :ChatGPT [query]
-    Load a ChatGPT respone to `query`into the Neovim command prompt.
+    Load a ChatGPT respone to `query` into the Neovim command prompt.
 ===============================================================================
 vim:ft=help:et:ts=2:sw=2:sts=2:norl
