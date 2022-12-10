@@ -9,8 +9,8 @@ buffer.
 
 ### Installation
 
-*n.b. You must have [python3](https://www.python.org/downloads/) installed on your machine in order to
-install and use this plugin.*
+_n.b. You must have [python3](https://www.python.org/downloads/) installed on your machine in order to
+install and use this plugin._
 
 You can install this plugin with [packer](https://github.com/wbthomason/packer.nvim)
 or any other vim plugin manager:
@@ -36,12 +36,22 @@ queries to work:
 ```
 
 You can find your session token by completing the following steps:
+
 1. Navigate to [https://chat.openai.com/chat](https://chat.openai.com/chat)
    after logging in or signing up
 2. Open the developer console (F12)
 3. Application > Cookies
 4. Copy the value under `__Secure-next-auth.session-token` into the `session_token`
    field present in the `.chatgpt-nvim.json` configuration file
+
+### Commands
+
+Below are the available commands this plugin supports:
+
+| Name    | Arguments | Description                                                        |
+| ------- | --------- | ------------------------------------------------------------------ |
+| ChatGPT |           | Open a new interactive ChatGPT environment                         |
+| ChatGPT | \[query\] | Load a ChatGPT response to `query` into the neovim command prompt. |
 
 ### Credits
 
