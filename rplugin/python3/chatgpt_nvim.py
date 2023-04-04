@@ -2,33 +2,16 @@ import json
 import os
 from dataclasses import dataclass
 from enum import Enum
-from math import ceil
 
 import neovim
-from dotenv import load_dotenv
-from revChatGPT.revChatGPT import Chatbot
+import openai
 
 CONFIG_PATH = '~/.chatgpt-nvim.json'
-DEFAULT_CONFIG = {'authorization': '', 'session_token': ''}
-
-CHAT_GPT = r'''
-      ___           ___           ___           ___           ___           ___           ___
-     /\  \         /\__\         /\  \         /\  \         /\  \         /\  \         /\  \
-    /::\  \       /:/  /        /::\  \        \:\  \       /::\  \       /::\  \        \:\  \
-   /:/\:\  \     /:/__/        /:/\:\  \        \:\  \     /:/\:\  \     /:/\:\  \        \:\  \
-  /:/  \:\  \   /::\  \ ___   /::\~\:\  \       /::\  \   /:/  \:\  \   /::\~\:\  \       /::\  \
- /:/__/ \:\__\ /:/\:\  /\__\ /:/\:\ \:\__\     /:/\:\__\ /:/__/_\:\__\ /:/\:\ \:\__\     /:/\:\__\
- \:\  \  \/__/ \/__\:\/:/  / \/__\:\/:/  /    /:/  \/__/ \:\  /\ \/__/ \/__\:\/:/  /    /:/  \/__/
-  \:\  \            \::/  /       \::/  /    /:/  /       \:\ \:\__\        \::/  /    /:/  /
-   \:\  \           /:/  /        /:/  /     \/__/         \:\/:/  /         \/__/     \/__/
-    \:\__\         /:/  /        /:/  /                     \::/  /
-     \/__/         \/__/         \/__/                       \/__/
-'''
+DEFAULT_CONFIG = {}
 
 @dataclass
 class Config:
-  authorization: str
-  session_token: str
+  api_key: str
 
   @staticmethod
   def load():
@@ -43,7 +26,7 @@ class Config:
 
   def as_dict(self):
     return {
-      'Authorization': self.authorization, 'session_token': self.session_token
+      'api_key': self.api_key,
     }
 
 class Anchor(Enum):
@@ -200,15 +183,13 @@ class Chat:
       relative='editor'
     )
 
-    self.display_window.buffer.append(CHAT_GPT.split('\n'))
-
     self.client.funcs.prompt_setcallback(prompt_buffer, "_chat_closed")
     self.client.funcs.prompt_setinterrupt(prompt_buffer, "_chat_closed")
     self.client.funcs.prompt_setprompt(prompt_buffer, '> ')
 
     self.client.command('startinsert!')
 
-  def query(self, bot):
+  def query(self, model):
     if not self.prompt_window or not self.prompt_window.valid:
       return
 
@@ -221,7 +202,7 @@ class Chat:
         list(
           map(
             lambda x: str(x),
-            bot.query(self.prompt_window.buffer[0]).split('\n')
+            model.query(self.prompt_window.buffer[0]).split('\n')
           )
         ) + ['']
       )
@@ -269,28 +250,29 @@ class Editor:
   def write(self, message):
     self.client.api.echo([[message, '']], True, {})
 
-class Bot:
-  def __init__(self, client):
-    self.client = client
+class Model:
+  def __init__(self, config):
+    openai.api_key = config.api_key
 
-  def refresh(self):
-    self.client.refresh_session()
-
-  def query(self, message):
-    return self.client.get_chat_response(message)['message']
+  def query(self, prompt):
+    return openai.ChatCompletion.create(
+      model="gpt-3.5-turbo", messages=[{
+        "role": "user", "content": prompt
+      }]
+    ).choices[0].text.strip()
 
 @neovim.plugin
 class Plugin:
   def __init__(self, client):
-    self.bot = Bot(Chatbot(Config.load().as_dict()))
+    self.model = Model(Config.load().as_dict())
     self.editor = Editor(client)
 
   @neovim.function('_chat_query')
-  def _chat_query(self, args):
-    self.editor.chat.query(self.bot)
+  def _chat_query(self, _):
+    self.editor.chat.query(self.model)
 
   @neovim.function('_chat_closed')
-  def _chat_closed(self, args):
+  def _chat_closed(self, _):
     self.editor.chat.close()
 
   @neovim.command(
@@ -298,12 +280,10 @@ class Plugin:
     nargs='*',
   )
   def chat(self, args):
-    self.bot.refresh()
-
     if not args:
       self.editor.show_chat()
     else:
       try:
-        self.editor.write(self.bot.query(' '.join(args)))
+        self.editor.write(self.model.query(' '.join(args)))
       except:
         self.editor.write('error: Failed to get response from ChatGPT')

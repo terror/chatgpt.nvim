@@ -25,24 +25,14 @@ use({
 ### Configuration
 
 The plugin looks for a configuration file in your home directory called
-`.chatgpt-nvim.json`, and it expects a valid `session_token` to be set for
+`.chatgpt-nvim.json`, and it expects a valid OpenAI api key to be set for
 queries to work:
 
 ```
-{
-  "authorization": "<API-KEY>",      # Optional API key
-  "session_token": "<SESSION-TOKEN>" # Your ChatGPT session token
-}
+{ 'api_key': '<API-KEY>' }
 ```
 
-You can find your session token by completing the following steps:
-
-1. Navigate to [https://chat.openai.com/chat](https://chat.openai.com/chat)
-   after logging in or signing up
-2. Open the developer console (F12)
-3. Application > Cookies
-4. Copy the value under `__Secure-next-auth.session-token` into the `session_token`
-   field present in the `.chatgpt-nvim.json` configuration file
+You can get an api key from OpenAI via their [website](https://platform.openai.com/account/api-keys).
 
 ### Commands
 
@@ -52,9 +42,3 @@ Below are the available commands this plugin supports:
 | ------- | --------- | ------------------------------------------------------------------ |
 | ChatGPT |           | Open a new interactive ChatGPT environment                         |
 | ChatGPT | \[query\] | Load a ChatGPT response to `query` into the Neovim command prompt. |
-
-### Credits
-
-The underlying API wrapper this plugin uses (for now) is `revChatGPT`, which is
-open source and can be found here:
-[https://github.com/acheong08/ChatGPT](https://github.com/acheong08/ChatGPT).
