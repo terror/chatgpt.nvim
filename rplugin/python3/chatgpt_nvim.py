@@ -252,7 +252,7 @@ class Editor:
 
 class Model:
   def __init__(self, config):
-    openai.api_key = config.api_key
+    openai.api_key = config['api_key']
 
   def query(self, prompt):
     return openai.ChatCompletion.create(
