@@ -28,8 +28,8 @@ The plugin looks for a configuration file in your home directory called
 `.chatgpt-nvim.json`, and it expects a valid OpenAI api key to be set for
 queries to work:
 
-```
-{ 'api_key': '<API-KEY>' }
+```json
+{ "api_key": "<API-KEY>" }
 ```
 
 You can get an api key from OpenAI via their [website](https://platform.openai.com/account/api-keys).
