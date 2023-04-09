@@ -21,6 +21,11 @@ use({
   run = 'pip3 install -r requirements.txt'
 })
 ```
+I suggest using `NeoVim 0.8.0` as this comes with Packer by default. So pull NeoVim from an older tree:
+
+```bash
+git clone https://github.com/neovim/neovim/tree/v0.8.0
+``` 
 
 ### Configuration
 
